@@ -1,0 +1,259 @@
+============================================================
+  POSTMAN API TESTING GUIDE - App Médicale
+============================================================
+
+Base URL: http://localhost:8080
+
+============================================================
+1. REGISTER A MEDECIN
+============================================================
+Method:  POST
+URL:     http://localhost:8080/api/auth/register/medecin
+Auth:    None
+Headers: Content-Type: application/json
+Body (raw JSON):
+{
+  "nom": "Dupont",
+  "prenom": "Jean",
+  "email": "jean.dupont@mail.com",
+  "motDePasse": "password123",
+  "specialite": "Cardiologie"
+}
+
+Expected Response (200):
+{
+  "message": "Inscription réussie. Votre compte est en attente d'activation par un administrateur."
+}
+
+============================================================
+2. REGISTER A PATIENT
+============================================================
+Method:  POST
+URL:     http://localhost:8080/api/auth/register/patient
+Auth:    None
+Headers: Content-Type: application/json
+Body (raw JSON):
+{
+  "nom": "Martin",
+  "prenom": "Marie",
+  "email": "marie.martin@mail.com",
+  "motDePasse": "password123",
+  "dateNaissance": "1990-05-15",
+  "telephone": "0612345678"
+}
+
+Expected Response (200):
+{
+  "message": "Inscription réussie. Votre compte est en attente d'activation par un administrateur."
+}
+
+============================================================
+3. LOGIN AS ADMIN (or MEDECIN) — returns JWT
+============================================================
+Method:  POST
+URL:     http://localhost:8080/api/auth/login
+Auth:    None
+Headers: Content-Type: application/json
+Body (raw JSON):
+{
+  "nom": "Admin",
+  "prenom": "Super",
+  "id": 1,
+  "motDePasse": "adminpassword"
+}
+
+NOTE: Replace nom, prenom, id, motDePasse with your actual
+      Administrateur or Medecin data from the database.
+      The account must have statusCompte_id = 1 (active).
+
+Expected Response (200):
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "type": "Bearer",
+  "id": 1,
+  "nom": "Admin",
+  "prenom": "Super",
+  "email": "admin@mail.com",
+  "role": "ROLE_ADMIN",
+  "message": "Connexion réussie"
+}
+
+>>> COPY THE "token" VALUE — you will need it for admin endpoints <<<
+
+============================================================
+4. LOGIN AS PATIENT — Step 1 (sends OTP to email)
+============================================================
+Method:  POST
+URL:     http://localhost:8080/api/auth/login/patient
+Auth:    None
+Headers: Content-Type: application/json
+Body (raw JSON):
+{
+  "email": "marie.martin@mail.com",
+  "motDePasse": "password123"
+}
+
+NOTE: The patient account must be active (statusCompte_id = 1).
+      An admin must activate it first.
+
+Expected Response (200):
+{
+  "message": "Un code OTP a été envoyé à votre adresse email"
+}
+
+>>> CHECK THE OTP EMAIL <<<
+Go to https://ethereal.email/login
+Login with:
+  Email:    elmira.schaefer94@ethereal.email
+  Password: zYMBueQxUSFAmmaDPf
+Click "Messages" to see the OTP code sent.
+
+============================================================
+5. LOGIN AS PATIENT — Step 2 (verify OTP, get JWT)
+============================================================
+Method:  POST
+URL:     http://localhost:8080/api/auth/login/patient/verify-otp
+Auth:    None
+Headers: Content-Type: application/json
+Body (raw JSON):
+{
+  "email": "marie.martin@mail.com",
+  "codeOtp": "123456"
+}
+
+NOTE: Replace "123456" with the actual OTP from the email.
+      OTP is valid for 10 minutes and can be used only once.
+
+Expected Response (200):
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "type": "Bearer",
+  "id": 3,
+  "nom": "Martin",
+  "prenom": "Marie",
+  "email": "marie.martin@mail.com",
+  "role": "ROLE_PATIENT",
+  "message": "Connexion réussie"
+}
+
+============================================================
+6. ADMIN — ACTIVATE A USER ACCOUNT
+============================================================
+Method:  PUT
+URL:     http://localhost:8080/api/admin/activate/2
+Auth:    Bearer Token
+Headers: Content-Type: application/json
+
+In Postman:
+  → Go to "Authorization" tab
+  → Type: Bearer Token
+  → Token: paste the admin JWT token from step 3
+
+NOTE: Replace "2" in the URL with the actual utilisateur id
+      you want to activate.
+
+Expected Response (200):
+{
+  "message": "Compte activé avec succès pour Dupont Jean"
+}
+
+============================================================
+7. ADMIN — DEACTIVATE A USER ACCOUNT
+============================================================
+Method:  PUT
+URL:     http://localhost:8080/api/admin/deactivate/2
+Auth:    Bearer Token
+Headers: Content-Type: application/json
+
+In Postman:
+  → Go to "Authorization" tab
+  → Type: Bearer Token
+  → Token: paste the admin JWT token from step 3
+
+Expected Response (200):
+{
+  "message": "Compte désactivé avec succès pour Dupont Jean"
+}
+
+============================================================
+8. ADMIN — GET ALL USERS
+============================================================
+Method:  GET
+URL:     http://localhost:8080/api/admin/utilisateurs
+Auth:    Bearer Token
+
+In Postman:
+  → Go to "Authorization" tab
+  → Type: Bearer Token
+  → Token: paste the admin JWT token from step 3
+
+Expected Response (200):
+[
+  {
+    "id": 1,
+    "nom": "Admin",
+    "prenom": "Super",
+    "email": "admin@mail.com",
+    "typeUtilisateur": "Administrateur",
+    "statusCompte": { "id": 1, "libelle": "compte active" }
+  },
+  ...
+]
+
+============================================================
+9. ADMIN — GET ONE USER BY ID
+============================================================
+Method:  GET
+URL:     http://localhost:8080/api/admin/utilisateurs/2
+Auth:    Bearer Token
+
+In Postman:
+  → Go to "Authorization" tab
+  → Type: Bearer Token
+  → Token: paste the admin JWT token from step 3
+
+Expected Response (200):
+{
+  "id": 2,
+  "nom": "Dupont",
+  "prenom": "Jean",
+  "email": "jean.dupont@mail.com",
+  "typeUtilisateur": "Medecin",
+  "statusCompte": { "id": 2, "libelle": "compte désactivé" }
+}
+
+============================================================
+  TESTING ORDER (recommended)
+============================================================
+1. First, manually insert an Administrateur in the DB:
+
+   INSERT INTO utilisateur (nom, prenom, email, motDePasse, statusCompte_id, typeUtilisateur)
+   VALUES ('Admin', 'Super', 'admin@mail.com',
+           '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy',
+           1, 'Administrateur');
+
+   INSERT INTO administrateur (utilisateur_id)
+   VALUES (LAST_INSERT_ID());
+
+   NOTE: The hashed password above = "password123" in BCrypt.
+         You can generate your own at https://bcrypt-generator.com/
+
+2. Login as Admin (step 3) → copy JWT token.
+3. Register a Medecin (step 1).
+4. Register a Patient (step 2).
+5. Admin activates the Medecin (step 6).
+6. Admin activates the Patient (step 6).
+7. Login as Medecin (step 3 with medecin credentials).
+8. Login as Patient step 1 (step 4).
+9. Check Ethereal email for OTP.
+10. Login as Patient step 2 (step 5 with OTP).
+
+============================================================
+  ERROR RESPONSES YOU MAY SEE
+============================================================
+- {"message": "Identifiants invalides"}           → wrong nom/prenom/id
+- {"message": "Mot de passe incorrect"}            → wrong password
+- {"message": "Votre compte est désactivé..."}     → account not activated
+- {"message": "Cet email est déjà utilisé"}        → duplicate email
+- {"message": "Code OTP invalide, expiré ou déjà utilisé"} → bad OTP
+- {"message": "Accès refusé"}                      → not admin role

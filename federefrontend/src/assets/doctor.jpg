@@ -1,0 +1,3 @@
+// Placeholder doctor image for DoctorLogin UI. Replace with a real image if desired.
+import doctorImg from './doctor-placeholder.jpg';
+export default doctorImg;

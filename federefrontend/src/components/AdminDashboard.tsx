@@ -1,0 +1,253 @@
+
+import React, { useState, useEffect } from "react";
+import { FaUserMd, FaUser, FaVials, FaCog, FaCalendarAlt, FaBell, FaEnvelope, FaPhone, FaSignOutAlt } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import { adminGetAllUsers, adminActivateUser, adminDeactivateUser, logout, isAuthenticated, getUser } from "../services/api";
+import type { AdminUtilisateur } from "../services/api";
+import "./AdminDashboard.css";
+
+const roles = [
+  { label: "Tous les rôles", value: "" },
+  { label: "Médecins", value: "Medecin" },
+  { label: "Patients", value: "Patient" },
+  { label: "Administrateurs", value: "Administrateur" },
+];
+const status = [
+  { label: "Tous les statuts", value: "" },
+  { label: "Activé", value: "active" },
+  { label: "Désactivé", value: "inactive" },
+];
+
+function mapUser(u: AdminUtilisateur) {
+  const initials = `${(u.prenom?.[0] || '').toUpperCase()}${(u.nom?.[0] || '').toUpperCase()}`;
+  const roleColor = u.typeUtilisateur === 'Medecin' ? '#4f8cff' : u.typeUtilisateur === 'Patient' ? '#a259e6' : '#16a34a';
+  const roleBg = u.typeUtilisateur === 'Medecin' ? '#e7f2ff' : u.typeUtilisateur === 'Patient' ? '#f3e8ff' : '#d1fae5';
+  const isActive = !!u.statusCompte && u.statusCompte.toLowerCase() !== 'désactivé' && u.statusCompte.toLowerCase() !== 'desactive' && u.statusCompte.toLowerCase() !== 'inactive';
+  return {
+    id: u.id,
+    initials,
+    name: `${u.prenom} ${u.nom}`,
+    role: u.typeUtilisateur,
+    roleColor,
+    roleBg,
+    job: u.specialite || '',
+    email: u.email || '',
+    phone: u.telephone || '',
+    dateNaissance: u.dateNaissance || '',
+    active: isActive,
+  };
+}
+
+const AdminDashboard = () => {
+  const [users, setUsers] = useState<ReturnType<typeof mapUser>[]>([]);
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [roleDropdown, setRoleDropdown] = useState(false);
+  const [statusDropdown, setStatusDropdown] = useState(false);
+  const [loadingToggle, setLoadingToggle] = useState<number | null>(null);
+  const navigate = useNavigate();
+  const currentUser = getUser();
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate("/admin-login");
+      return;
+    }
+    adminGetAllUsers()
+      .then(data => setUsers(data.map(mapUser)))
+      .catch(() => {
+        logout();
+        navigate("/admin-login");
+      });
+  }, [navigate]);
+
+  const handleToggleActive = async (idx: number) => {
+    const user = users[idx];
+    if (!user) return;
+    setLoadingToggle(idx);
+    try {
+      if (user.active) {
+        await adminDeactivateUser(user.id);
+      } else {
+        await adminActivateUser(user.id);
+      }
+      setUsers(prev => prev.map((u, i) => i === idx ? { ...u, active: !u.active } : u));
+    } catch {
+      // Silently handle — could add notification
+    } finally {
+      setLoadingToggle(null);
+    }
+  };
+  const handleLogout = () => {
+    logout();
+    navigate("/admin-login");
+  };
+
+  const filteredUsers = users.filter(u =>
+    (roleFilter === "" || u.role === roleFilter) &&
+    (statusFilter === "" || (statusFilter === "active" && u.active) || (statusFilter === "inactive" && !u.active)) &&
+    (`${u.name} ${u.email} ${u.job}`.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  return (
+    <div className="admin-dashboard-root">
+      {/* Sidebar */}
+      <aside className="admin-sidebar">
+        <div>
+          <div style={{ display: "flex", alignItems: "center", gap: 16, padding: "0 0 32px 36px" }}>
+            <div className="admin-sidebar-logo">
+              <FaUserMd size={32} color="#fff" />
+            </div>
+            <div>
+              <div className="admin-sidebar-title">MediCare</div>
+              <div className="admin-sidebar-subtitle">Administration</div>
+            </div>
+          </div>
+          <nav className="admin-sidebar-nav">
+            <SidebarButton icon={<FaCalendarAlt />} label="Tableau de Bord" active={false} />
+            <SidebarButton icon={<FaUser />} label="Utilisateurs" active={true} />
+            <SidebarButton icon={<FaCalendarAlt />} label="Rendez-vous" active={false} />
+            <SidebarButton icon={<FaVials />} label="Analyses" active={false} />
+            <SidebarButton icon={<FaCog />} label="Paramètres" active={false} />
+          </nav>
+        </div>
+        <div style={{ padding: "0 0 0 36px" }}>
+          <div className="admin-sidebar-user">
+            <div className="admin-sidebar-user-avatar">{currentUser ? `${(currentUser.prenom?.[0] || '').toUpperCase()}${(currentUser.nom?.[0] || '').toUpperCase()}` : 'AD'}</div>
+            <div>
+              <div className="admin-sidebar-user-info">{currentUser ? `${currentUser.prenom} ${currentUser.nom}` : 'Admin'}</div>
+              <div className="admin-sidebar-user-email">{currentUser?.email || ''}</div>
+            </div>
+          </div>
+          <button className="admin-sidebar-logout" onClick={handleLogout}>
+            <FaSignOutAlt /> Déconnexion
+          </button>
+        </div>
+      </aside>
+      {/* Main content */}
+      <main className="admin-main">
+        {/* Header */}
+        <div className="admin-header">
+          <div>
+            <div className="admin-header-title">Panneau d'Administration</div>
+            <div className="admin-header-subtitle">Bienvenue dans votre espace de gestion</div>
+          </div>
+          <div className="admin-header-actions">
+            <div className="admin-header-notif">
+              <FaBell size={18} color="#222" />
+              <span className="admin-header-notif-badge">3</span>
+              <span className="admin-header-avatar">{currentUser ? `${(currentUser.prenom?.[0] || '').toUpperCase()}${(currentUser.nom?.[0] || '').toUpperCase()}` : 'AD'}</span>
+            </div>
+          </div>
+        </div>
+        {/* Filters */}
+        <div className="admin-filters">
+          <input className="admin-filters-input" type="text" placeholder="Rechercher par nom, prénom ou email..." value={search} onChange={e => setSearch(e.target.value)} />
+          <div className="admin-filters-dropdown" tabIndex={0} onClick={() => setRoleDropdown(v => !v)} onBlur={() => setRoleDropdown(false)} style={{ position: "relative" }}>
+            {roles.find((r: {label: string, value: string}) => r.value === roleFilter)?.label || roles[0].label}
+            <span style={{ float: "right", marginLeft: 8 }}>▼</span>
+            {roleDropdown && (
+              <div className="admin-filters-dropdown-list">
+                {roles.map((r: {label: string, value: string}) => (
+                  <div key={r.value} className={"admin-filters-dropdown-item" + (roleFilter === r.value ? " selected" : "")} onMouseDown={() => { setRoleFilter(r.value); setRoleDropdown(false); }}>
+                    {r.label} {roleFilter === r.value && <span>✓</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="admin-filters-dropdown" tabIndex={0} onClick={() => setStatusDropdown(v => !v)} onBlur={() => setStatusDropdown(false)} style={{ position: "relative" }}>
+            {status.find((s: {label: string, value: string}) => s.value === statusFilter)?.label || status[0].label}
+            <span style={{ float: "right", marginLeft: 8 }}>▼</span>
+            {statusDropdown && (
+              <div className="admin-filters-dropdown-list">
+                {status.map((s: {label: string, value: string}) => (
+                  <div key={s.value} className={"admin-filters-dropdown-item" + (statusFilter === s.value ? " selected" : "")} onMouseDown={() => { setStatusFilter(s.value); setStatusDropdown(false); }}>
+                    {s.label} {statusFilter === s.value && <span>✓</span>}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        {/* Table */}
+        <div className="admin-table-container">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>UTILISATEUR</th>
+                <th>CONTACT</th>
+                <th>RÔLE</th>
+                <th>DÉTAILS</th>
+                <th>ACTIVATION</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map((u, idx) => (
+                <tr key={idx}>
+                  <td style={{ display: "flex", alignItems: "center", gap: 16 }}>
+                    <div className="admin-user-avatar" style={{ background: u.roleBg, color: u.roleColor }}>{u.initials}</div>
+                    <div>
+                      <div style={{ fontWeight: 700, color: "#222" }}>{u.name}</div>
+                      <div style={{ color: "#64748b", fontSize: 14 }}>{u.job}</div>
+                    </div>
+                  </td>
+                  <td>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#222", fontSize: 15 }}>
+                      <FaEnvelope style={{ color: "#64748b" }} /> {u.email}
+                    </div>
+                    {u.role === 'Patient' && u.phone && (
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#222", fontSize: 15, marginTop: 2 }}>
+                        <FaPhone style={{ color: "#64748b" }} /> {u.phone}
+                      </div>
+                    )}
+                  </td>
+                  <td>
+                    <span className="admin-role-badge" style={{ background: u.roleBg, color: u.roleColor }}>{u.role}</span>
+                  </td>
+                  <td>
+                    {u.role === 'Patient' && u.dateNaissance && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#222', fontSize: 14 }}>
+                        <FaCalendarAlt style={{ color: '#64748b', fontSize: 14 }} /> {u.dateNaissance}
+                      </div>
+                    )}
+                    {u.role === 'Medecin' && u.job && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#222', fontSize: 14 }}>
+                        <FaUserMd style={{ color: '#64748b', fontSize: 14 }} /> {u.job}
+                      </div>
+                    )}
+                    {u.role === 'Administrateur' && (
+                      <span style={{ color: '#94a3b8', fontSize: 14 }}>—</span>
+                    )}
+                  </td>
+                  <td>
+                    <label className="switch">
+                      <input type="checkbox" checked={u.active} onChange={() => handleToggleActive(idx)} disabled={loadingToggle === idx} />
+                      <span className="slider round"></span>
+                    </label>
+                    <span style={{ marginLeft: 8, color: u.active ? '#22c55e' : '#ef4444', fontWeight: 600 }}>
+                      {loadingToggle === idx ? '...' : u.active ? 'Activé' : 'Désactivé'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+
+            </tbody>
+          </table>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+function SidebarButton({ icon, label, active }: { icon: React.ReactNode; label: string; active: boolean }) {
+  return (
+    <button className={"admin-sidebar-btn" + (active ? " active" : "") }>
+      <span style={{ fontSize: 20 }}>{icon}</span>
+      {label}
+    </button>
+  );
+}
+
+export default AdminDashboard;

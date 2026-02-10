@@ -1,0 +1,139 @@
+.features {
+  padding: 80px 70px 90px;
+  background: #ffffff;
+  text-align: center;
+}
+
+.features-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: #e7f2ff;
+  color: #0b5ed7;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 18px;
+}
+
+.features h2 {
+  font-size: 40px;
+  margin: 0 0 14px;
+  font-weight: 900;
+}
+
+.features h2 span {
+  color: #0d6efd;
+}
+
+.features-subtitle {
+  color: #475569;
+  margin: 0 auto 50px;
+  max-width: 720px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 25px;
+  text-align: left;
+}
+
+.feature-card {
+  background: #fff;
+  border-radius: 15px;
+  padding: 22px 24px 26px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  border: 1px solid #eef2f6;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.feature-top {
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  margin-bottom: 18px;
+  color: #ffffff;
+  font-size: 18px;
+}
+
+.feature-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Titre très gras pour les fonctionnalités */
+.feature-title {
+  margin: 0 0 10px;
+  font-size: 22px;
+  font-family: 'Inter', Arial, sans-serif;
+  font-weight: 700;
+  color: #212529;
+  letter-spacing: -0.5px;
+}
+
+.feature-card p {
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);
+}
+
+.tone-blue {
+  background: linear-gradient(135deg, #0d6efd, #00c4ff);
+}
+
+.tone-pink {
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+}
+
+.tone-green {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+}
+
+.tone-orange {
+  background: linear-gradient(135deg, #f97316, #ef4444);
+}
+
+.tone-purple {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+}
+
+.tone-cyan {
+  background: linear-gradient(135deg, #06b6d4, #3b82f6);
+}
+
+.tone-rose {
+  background: linear-gradient(135deg, #f43f5e, #ec4899);
+}
+
+.tone-emerald {
+  background: linear-gradient(135deg, #10b981, #22c55e);
+}
+
+@media (max-width: 1100px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .features {
+    padding: 60px 24px 70px;
+  }
+
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+}

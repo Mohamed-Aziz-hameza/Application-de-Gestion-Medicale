@@ -3,7 +3,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { ChangeEvent, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getMyProfile, updateMyProfile, isAuthenticated, logout } from '../services/api';
+import { FaUserMd, FaUser, FaVials, FaSignOutAlt, FaCheck, FaEdit, FaLock } from 'react-icons/fa';
+import { getMyProfile, updateMyProfile, isAuthenticated, logout, watchSessionExpiry, getSessionTimeRemaining } from '../services/api';
 import type { ProfileUpdateRequest } from '../services/api';
 import './ProfilePage.css';
 
@@ -142,6 +143,12 @@ function useProfile() {
       navigate('/patient-login');
       return;
     }
+
+    // Watch for session expiry
+    const stopWatching = watchSessionExpiry(() => {
+      navigate('/patient-login');
+    });
+
     (async () => {
       try {
         const profile = await getMyProfile();
@@ -153,12 +160,14 @@ function useProfile() {
         setUtilisateur(user);
         populateFormFromUser(user);
       } catch {
-        logout();
+        await logout();
         navigate('/patient-login');
       } finally {
         setIsLoading(false);
       }
     })();
+
+    return stopWatching;
   }, [navigate]);
 
   const togglePasswordChange = useCallback(() => {
@@ -245,6 +254,11 @@ function useProfile() {
 
   const clearNotification = useCallback(() => setNotification(null), []);
 
+  const handleLogout = useCallback(async () => {
+    await logout();
+    navigate('/');
+  }, [navigate]);
+
   useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => setNotification(null), 5000);
@@ -256,70 +270,11 @@ function useProfile() {
     utilisateur, formData, errors, isLoading, isSaving,
     isEditing, wantsPasswordChange, notification,
     handleChange, handleSubmit, startEditing, cancelEditing,
-    clearNotification, togglePasswordChange,
+    clearNotification, togglePasswordChange, handleLogout,
   };
 }
 
-// ─── Icônes SVG ─────────────────────────────────────────────────
-const CheckIcon = () => (
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-  </svg>
-);
 
-const UserIcon = () => (
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-  </svg>
-);
-
-const MedicalIcon = () => (
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-      d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-  </svg>
-);
-
-const EditIcon = () => (
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-  </svg>
-);
-
-const PatientImage = () => (
-  <svg viewBox="0 0 120 120" fill="none" className="profile-type-image">
-    <circle cx="60" cy="60" r="58" fill="#dbeafe" stroke="#3b82f6" strokeWidth="4"/>
-    <circle cx="60" cy="45" r="20" fill="#3b82f6"/>
-    <path d="M30 95c0-16.569 13.431-30 30-30s30 13.431 30 30" fill="#3b82f6"/>
-    <circle cx="60" cy="45" r="15" fill="#fff"/>
-    <circle cx="55" cy="42" r="2" fill="#1e40af"/>
-    <circle cx="65" cy="42" r="2" fill="#1e40af"/>
-    <path d="M55 50c2.5 3 7.5 3 10 0" stroke="#1e40af" strokeWidth="2" strokeLinecap="round"/>
-  </svg>
-);
-
-const MedecinImage = () => (
-  <svg viewBox="0 0 120 120" fill="none" className="profile-type-image">
-    <circle cx="60" cy="60" r="58" fill="#d1fae5" stroke="#10b981" strokeWidth="4"/>
-    <circle cx="60" cy="45" r="20" fill="#10b981"/>
-    <path d="M30 95c0-16.569 13.431-30 30-30s30 13.431 30 30" fill="#10b981"/>
-    <circle cx="60" cy="45" r="15" fill="#fff"/>
-    <circle cx="55" cy="42" r="2" fill="#065f46"/>
-    <circle cx="65" cy="42" r="2" fill="#065f46"/>
-    <path d="M55 50c2.5 3 7.5 3 10 0" stroke="#065f46" strokeWidth="2" strokeLinecap="round"/>
-    <circle cx="85" cy="75" r="8" stroke="#065f46" strokeWidth="3" fill="none"/>
-    <path d="M85 67V55c0-5-10-5-10-5" stroke="#065f46" strokeWidth="3" strokeLinecap="round"/>
-  </svg>
-);
-
-const LockIcon = () => (
-  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-  </svg>
-);
 
 // ─── Composant principal ────────────────────────────────────────
 export default function ProfilePage() {
@@ -327,28 +282,8 @@ export default function ProfilePage() {
     utilisateur, formData, errors, isLoading, isSaving,
     isEditing, wantsPasswordChange, notification,
     handleChange, handleSubmit, startEditing, cancelEditing,
-    clearNotification, togglePasswordChange,
+    clearNotification, togglePasswordChange, handleLogout,
   } = useProfile();
-
-  if (isLoading) {
-    return (
-      <div className="profile-page">
-        <div className="loading"><div className="spinner"></div></div>
-      </div>
-    );
-  }
-
-  if (!utilisateur) {
-    return (
-      <div className="profile-page">
-        <div className="no-profile">
-          <UserIcon />
-          <h2>Aucun profil</h2>
-          <p>Le profil sera chargé depuis une autre page.</p>
-        </div>
-      </div>
-    );
-  }
 
   const getTypeLabel = (type: string) => {
     const labels: Record<string, string> = {
@@ -359,199 +294,267 @@ export default function ProfilePage() {
     return labels[type] || type;
   };
 
+  if (isLoading) {
+    return (
+      <div className="pd-root">
+        <div className="pd-loading"><div className="pd-spinner"></div></div>
+      </div>
+    );
+  }
+
+  if (!utilisateur) {
+    return (
+      <div className="pd-root">
+        <div className="pd-empty">
+          <FaUser size={64} />
+          <h2>Aucun profil</h2>
+          <p>Le profil sera chargé depuis une autre page.</p>
+        </div>
+      </div>
+    );
+  }
+
   const isMedecin = formData.typeUtilisateur === 'Medecin';
-  const sectionTitle = isMedecin ? 'Médecin' : 'Patient';
+  const isPatient = formData.typeUtilisateur === 'Patient';
+  const roleColor = isMedecin ? '#16a34a' : '#4f8cff';
+  const roleBg = isMedecin ? '#dcfce7' : '#dbeafe';
+  const roleGradient = isMedecin
+    ? 'linear-gradient(90deg, #16a34a 0%, #22c55e 100%)'
+    : 'linear-gradient(90deg, #4f8cff 0%, #2563eb 100%)';
+  const initials = `${(formData.prenom?.[0] || '').toUpperCase()}${(formData.nom?.[0] || '').toUpperCase()}`;
 
   return (
-    <div className="profile-page">
+    <div className="pd-root">
       {/* Notification */}
       {notification && (
-        <div className={`notification ${notification.type}`} onClick={clearNotification}>
-          {notification.type === 'success' ? <CheckIcon /> : '⚠️'}
+        <div className={`pd-notification ${notification.type}`} onClick={clearNotification}>
+          {notification.type === 'success' ? <FaCheck /> : '⚠️'}
           {notification.message}
         </div>
       )}
 
-      {/* En-tête du profil */}
-      <div className="profile-header">
-        <div className="profile-avatar">
-          {isMedecin ? <MedecinImage /> : <PatientImage />}
+      {/* Sidebar */}
+      <aside className="pd-sidebar">
+        <div>
+          <div className="pd-sidebar-brand">
+            <div className="pd-sidebar-logo" style={{ background: roleGradient }}>
+              {isMedecin
+                ? <FaUserMd size={32} color="#fff" />
+                : <FaUser size={32} color="#fff" />
+              }
+            </div>
+            <div>
+              <div className="pd-sidebar-title">MediCare</div>
+              <div className="pd-sidebar-subtitle">Mon Espace</div>
+            </div>
+          </div>
+          <nav className="pd-sidebar-nav">
+            <button className="pd-sidebar-btn" style={{ background: roleGradient, color: '#fff', boxShadow: `0 4px 24px ${roleColor}22` }}>
+              <FaUser /> Mon Profil
+            </button>
+          </nav>
         </div>
-        <div className="profile-info">
-          <h1>{sectionTitle}</h1>
-        </div>
-        {!isEditing && (
-          <button type="button" className="btn btn-edit" onClick={startEditing}>
-            <EditIcon /> Modifier
+        <div className="pd-sidebar-bottom">
+          <div className="pd-sidebar-user">
+            <div className="pd-sidebar-user-avatar" style={{ background: roleColor }}>{initials}</div>
+            <div>
+              <div className="pd-sidebar-user-name">{formData.prenom} {formData.nom}</div>
+              <div className="pd-sidebar-user-email">{formData.email}</div>
+            </div>
+          </div>
+          <button className="pd-sidebar-logout" onClick={handleLogout}>
+            <FaSignOutAlt /> Déconnexion
           </button>
-        )}
-      </div>
-
-      {/* Mode visualisation */}
-      {!isEditing && (
-        <div className="profile-details">
-          <div className="details-section">
-            <h2><UserIcon /> Informations personnelles</h2>
-            <div className="details-grid">
-              <div className="detail-item">
-                <span className="detail-label">Prénom</span>
-                <span className="detail-value">{formData.prenom}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Nom</span>
-                <span className="detail-value">{formData.nom}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Email</span>
-                <span className="detail-value">{formData.email}</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Type de compte</span>
-                <span className="detail-value">{getTypeLabel(formData.typeUtilisateur)}</span>
-              </div>
-            </div>
-          </div>
-
-          {formData.typeUtilisateur === 'Patient' && (
-            <div className="details-section">
-              <h2><MedicalIcon /> Informations Patient</h2>
-              <div className="details-grid">
-                <div className="detail-item">
-                  <span className="detail-label">Date de naissance</span>
-                  <span className="detail-value">{formData.dateNaissance || 'Non renseignée'}</span>
-                </div>
-                <div className="detail-item">
-                  <span className="detail-label">Téléphone</span>
-                  <span className="detail-value">{formData.telephone || 'Non renseigné'}</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {formData.typeUtilisateur === 'Medecin' && (
-            <div className="details-section">
-              <h2><MedicalIcon /> Informations Médecin</h2>
-              <div className="details-grid">
-                <div className="detail-item">
-                  <span className="detail-label">Spécialité</span>
-                  <span className="detail-value">{formData.specialite || 'Non renseignée'}</span>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-      )}
+      </aside>
 
-      {/* Mode édition */}
-      {isEditing && (
-        <form className="profile-form" onSubmit={handleSubmit}>
-          {/* Informations personnelles */}
-          <div className="form-section">
-            <h2><UserIcon /> Informations personnelles</h2>
-            <div className="form-grid">
-              <div className="form-group">
-                <label htmlFor="prenom">Prénom <span className="required">*</span></label>
-                <input type="text" id="prenom" name="prenom" value={formData.prenom} onChange={handleChange}
-                  className={errors.prenom ? 'error' : ''} placeholder="Votre prénom" maxLength={100} />
-                {errors.prenom && <span className="error-message">{errors.prenom}</span>}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="nom">Nom <span className="required">*</span></label>
-                <input type="text" id="nom" name="nom" value={formData.nom} onChange={handleChange}
-                  className={errors.nom ? 'error' : ''} placeholder="Votre nom" maxLength={100} />
-                {errors.nom && <span className="error-message">{errors.nom}</span>}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="email">Email <span className="required">*</span></label>
-                <input type="email" id="email" name="email" value={formData.email} onChange={handleChange}
-                  className={errors.email ? 'error' : ''} placeholder="votre@email.com" maxLength={100} />
-                {errors.email && <span className="error-message">{errors.email}</span>}
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="typeUtilisateur">Type de compte</label>
-                <input type="text" id="typeUtilisateur" value={getTypeLabel(formData.typeUtilisateur)} disabled />
-              </div>
-            </div>
+      {/* Main content */}
+      <main className="pd-main">
+        {/* Header */}
+        <div className="pd-header">
+          <div>
+            <div className="pd-header-title">Mon Profil</div>
+            <div className="pd-header-subtitle">Gérer vos informations personnelles</div>
           </div>
+          <div className="pd-header-actions">
+            <span className="pd-role-badge" style={{ background: roleBg, color: roleColor }}>{getTypeLabel(formData.typeUtilisateur)}</span>
+            <div className="pd-header-avatar" style={{ background: roleColor }}>{initials}</div>
+          </div>
+        </div>
 
-          {/* Section Patient */}
-          {formData.typeUtilisateur === 'Patient' && (
-            <div className="form-section">
-              <h2><MedicalIcon /> Informations Patient</h2>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label htmlFor="dateNaissance">Date de naissance</label>
-                  <input type="date" id="dateNaissance" name="dateNaissance" value={formData.dateNaissance}
-                    onChange={handleChange} className={errors.dateNaissance ? 'error' : ''} />
-                  {errors.dateNaissance && <span className="error-message">{errors.dateNaissance}</span>}
+        {/* View mode */}
+        {!isEditing && (
+          <>
+            <div className="pd-actions-bar">
+              <button type="button" className="pd-btn pd-btn-edit" style={{ background: roleGradient }} onClick={startEditing}>
+                <FaEdit /> Modifier le profil
+              </button>
+            </div>
+
+            {/* Personal info card */}
+            <div className="pd-card">
+              <div className="pd-card-title"><FaUser /> Informations personnelles</div>
+              <div className="pd-card-grid">
+                <div className="pd-card-item">
+                  <span className="pd-card-label">Prénom</span>
+                  <span className="pd-card-value">{formData.prenom}</span>
                 </div>
-                <div className="form-group">
-                  <label htmlFor="telephone">Téléphone</label>
-                  <input type="tel" id="telephone" name="telephone" value={formData.telephone}
-                    onChange={handleChange} className={errors.telephone ? 'error' : ''} placeholder="06 12 34 56 78" maxLength={20} />
-                  {errors.telephone && <span className="error-message">{errors.telephone}</span>}
+                <div className="pd-card-item">
+                  <span className="pd-card-label">Nom</span>
+                  <span className="pd-card-value">{formData.nom}</span>
+                </div>
+                <div className="pd-card-item">
+                  <span className="pd-card-label">Email</span>
+                  <span className="pd-card-value">{formData.email}</span>
+                </div>
+                <div className="pd-card-item">
+                  <span className="pd-card-label">Type de compte</span>
+                  <span className="pd-card-value">
+                    <span className="pd-role-badge-sm" style={{ background: roleBg, color: roleColor }}>{getTypeLabel(formData.typeUtilisateur)}</span>
+                  </span>
                 </div>
               </div>
             </div>
-          )}
 
-          {/* Section Médecin */}
-          {formData.typeUtilisateur === 'Medecin' && (
-            <div className="form-section">
-              <h2><MedicalIcon /> Informations Médecin</h2>
-              <div className="form-grid">
-                <div className="form-group full-width">
-                  <label htmlFor="specialite">Spécialité</label>
-                  <input type="text" id="specialite" name="specialite" value={formData.specialite}
-                    onChange={handleChange} className={errors.specialite ? 'error' : ''} placeholder="Cardiologie, Pédiatrie, Dermatologie..." maxLength={100} />
-                  {errors.specialite && <span className="error-message">{errors.specialite}</span>}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Section Mot de passe */}
-          <div className="form-section password-section">
-            <div className="password-toggle">
-              <h2><LockIcon /> Sécurité</h2>
-              <label className="toggle-label">
-                <input type="checkbox" checked={wantsPasswordChange} onChange={togglePasswordChange} />
-                <span>Voulez-vous changer le mot de passe ?</span>
-              </label>
-            </div>
-
-            {wantsPasswordChange && (
-              <div className="form-grid">
-                <div className="form-group">
-                  <label htmlFor="motDePasse">Nouveau mot de passe <span className="required">*</span></label>
-                  <input type="password" id="motDePasse" name="motDePasse" value={formData.motDePasse}
-                    onChange={handleChange} className={errors.motDePasse ? 'error' : ''} placeholder="Minimum 6 caractères" maxLength={100} />
-                  {errors.motDePasse && <span className="error-message">{errors.motDePasse}</span>}
-                </div>
-                <div className="form-group">
-                  <label htmlFor="confirmMotDePasse">Confirmer le mot de passe <span className="required">*</span></label>
-                  <input type="password" id="confirmMotDePasse" name="confirmMotDePasse" value={formData.confirmMotDePasse}
-                    onChange={handleChange} className={errors.confirmMotDePasse ? 'error' : ''} placeholder="Répétez le mot de passe" maxLength={100} />
-                  {errors.confirmMotDePasse && <span className="error-message">{errors.confirmMotDePasse}</span>}
+            {/* Patient info card */}
+            {isPatient && (
+              <div className="pd-card">
+                <div className="pd-card-title"><FaVials /> Informations Patient</div>
+                <div className="pd-card-grid">
+                  <div className="pd-card-item">
+                    <span className="pd-card-label">Date de naissance</span>
+                    <span className="pd-card-value">{formData.dateNaissance || 'Non renseignée'}</span>
+                  </div>
+                  <div className="pd-card-item">
+                    <span className="pd-card-label">Téléphone</span>
+                    <span className="pd-card-value">{formData.telephone || 'Non renseigné'}</span>
+                  </div>
                 </div>
               </div>
             )}
-          </div>
 
-          {/* Actions */}
-          <div className="form-actions">
-            <button type="button" className="btn btn-secondary" onClick={cancelEditing}>Annuler</button>
-            <button type="submit" className="btn btn-primary" disabled={isSaving}>
-              {isSaving ? 'Enregistrement...' : 'Modifier'}
-            </button>
-          </div>
-        </form>
-      )}
+            {/* Medecin info card */}
+            {isMedecin && (
+              <div className="pd-card">
+                <div className="pd-card-title"><FaUserMd /> Informations Médecin</div>
+                <div className="pd-card-grid">
+                  <div className="pd-card-item">
+                    <span className="pd-card-label">Spécialité</span>
+                    <span className="pd-card-value">{formData.specialite || 'Non renseignée'}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Edit mode */}
+        {isEditing && (
+          <form onSubmit={handleSubmit}>
+            {/* Personal info */}
+            <div className="pd-card">
+              <div className="pd-card-title"><FaUser /> Informations personnelles</div>
+              <div className="pd-form-grid">
+                <div className="pd-form-group">
+                  <label htmlFor="prenom">Prénom <span className="pd-required">*</span></label>
+                  <input type="text" id="prenom" name="prenom" value={formData.prenom} onChange={handleChange}
+                    className={errors.prenom ? 'pd-input-error' : ''} placeholder="Votre prénom" maxLength={100} />
+                  {errors.prenom && <span className="pd-error-msg">{errors.prenom}</span>}
+                </div>
+                <div className="pd-form-group">
+                  <label htmlFor="nom">Nom <span className="pd-required">*</span></label>
+                  <input type="text" id="nom" name="nom" value={formData.nom} onChange={handleChange}
+                    className={errors.nom ? 'pd-input-error' : ''} placeholder="Votre nom" maxLength={100} />
+                  {errors.nom && <span className="pd-error-msg">{errors.nom}</span>}
+                </div>
+                <div className="pd-form-group">
+                  <label htmlFor="email">Email <span className="pd-required">*</span></label>
+                  <input type="email" id="email" name="email" value={formData.email} onChange={handleChange}
+                    className={errors.email ? 'pd-input-error' : ''} placeholder="votre@email.com" maxLength={100} />
+                  {errors.email && <span className="pd-error-msg">{errors.email}</span>}
+                </div>
+                <div className="pd-form-group">
+                  <label htmlFor="typeUtilisateur">Type de compte</label>
+                  <input type="text" id="typeUtilisateur" value={getTypeLabel(formData.typeUtilisateur)} disabled />
+                </div>
+              </div>
+            </div>
+
+            {/* Patient fields */}
+            {isPatient && (
+              <div className="pd-card">
+                <div className="pd-card-title"><FaVials /> Informations Patient</div>
+                <div className="pd-form-grid">
+                  <div className="pd-form-group">
+                    <label htmlFor="dateNaissance">Date de naissance</label>
+                    <input type="date" id="dateNaissance" name="dateNaissance" value={formData.dateNaissance}
+                      onChange={handleChange} className={errors.dateNaissance ? 'pd-input-error' : ''} />
+                    {errors.dateNaissance && <span className="pd-error-msg">{errors.dateNaissance}</span>}
+                  </div>
+                  <div className="pd-form-group">
+                    <label htmlFor="telephone">Téléphone</label>
+                    <input type="tel" id="telephone" name="telephone" value={formData.telephone}
+                      onChange={handleChange} className={errors.telephone ? 'pd-input-error' : ''} placeholder="06 12 34 56 78" maxLength={20} />
+                    {errors.telephone && <span className="pd-error-msg">{errors.telephone}</span>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Medecin fields */}
+            {isMedecin && (
+              <div className="pd-card">
+                <div className="pd-card-title"><FaUserMd /> Informations Médecin</div>
+                <div className="pd-form-grid">
+                  <div className="pd-form-group pd-form-full">
+                    <label htmlFor="specialite">Spécialité</label>
+                    <input type="text" id="specialite" name="specialite" value={formData.specialite}
+                      onChange={handleChange} className={errors.specialite ? 'pd-input-error' : ''} placeholder="Cardiologie, Pédiatrie, Dermatologie..." maxLength={100} />
+                    {errors.specialite && <span className="pd-error-msg">{errors.specialite}</span>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Security / password section */}
+            <div className="pd-card pd-card-security">
+              <div className="pd-security-toggle">
+                <div className="pd-card-title"><FaLock /> Sécurité</div>
+                <label className="pd-toggle-label">
+                  <input type="checkbox" checked={wantsPasswordChange} onChange={togglePasswordChange} />
+                  <span>Changer le mot de passe</span>
+                </label>
+              </div>
+              {wantsPasswordChange && (
+                <div className="pd-form-grid" style={{ marginTop: 20 }}>
+                  <div className="pd-form-group">
+                    <label htmlFor="motDePasse">Nouveau mot de passe <span className="pd-required">*</span></label>
+                    <input type="password" id="motDePasse" name="motDePasse" value={formData.motDePasse}
+                      onChange={handleChange} className={errors.motDePasse ? 'pd-input-error' : ''} placeholder="Minimum 6 caractères" maxLength={100} />
+                    {errors.motDePasse && <span className="pd-error-msg">{errors.motDePasse}</span>}
+                  </div>
+                  <div className="pd-form-group">
+                    <label htmlFor="confirmMotDePasse">Confirmer <span className="pd-required">*</span></label>
+                    <input type="password" id="confirmMotDePasse" name="confirmMotDePasse" value={formData.confirmMotDePasse}
+                      onChange={handleChange} className={errors.confirmMotDePasse ? 'pd-input-error' : ''} placeholder="Répétez le mot de passe" maxLength={100} />
+                    {errors.confirmMotDePasse && <span className="pd-error-msg">{errors.confirmMotDePasse}</span>}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Form actions */}
+            <div className="pd-form-actions">
+              <button type="button" className="pd-btn pd-btn-cancel" onClick={cancelEditing}>Annuler</button>
+              <button type="submit" className="pd-btn pd-btn-save" style={{ background: roleGradient }} disabled={isSaving}>
+                {isSaving ? 'Enregistrement...' : '✓ Enregistrer'}
+              </button>
+            </div>
+          </form>
+        )}
+      </main>
     </div>
   );
-};
+}
 
 

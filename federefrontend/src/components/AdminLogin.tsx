@@ -1,9 +1,9 @@
 
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaUser, FaIdCard, FaLock, FaEye, FaEyeSlash, FaShieldAlt, FaCheckCircle, FaExclamationTriangle } from "react-icons/fa";
-import { loginMedecinAdmin, setToken, setUser } from "../services/api";
+import { loginMedecinAdmin, setToken, setUser, isAuthenticated, getUser } from "../services/api";
 import logo from "../assets/logo.png";
 import "./AdminLogin.css";
 
@@ -17,6 +17,17 @@ const AdminLogin: React.FC = () => {
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      const user = getUser();
+      if (user && user.role === 'ROLE_ADMIN') {
+        navigate('/admin-dashboard', { replace: true });
+      } else if (user) {
+        navigate('/profile', { replace: true });
+      }
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

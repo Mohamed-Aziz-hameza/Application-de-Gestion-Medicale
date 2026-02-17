@@ -1,11 +1,11 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./PatientLogin.css";
 import logo from "../assets/logo.png";
 import patientImg from "../assets/patient.jpg";
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { loginPatient, verifyPatientOtp, setToken, setUser } from "../services/api";
+import { loginPatient, verifyPatientOtp, setToken, setUser, isAuthenticated, getUser } from "../services/api";
 
 const PatientLogin: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -18,6 +18,17 @@ const PatientLogin: React.FC = () => {
   const [otpCode, setOtpCode] = useState("");
   const [otpMessage, setOtpMessage] = useState("");
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      const user = getUser();
+      if (user && user.role === 'ROLE_ADMIN') {
+        navigate('/admin-dashboard', { replace: true });
+      } else if (user) {
+        navigate('/profile', { replace: true });
+      }
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,6 +149,9 @@ const PatientLogin: React.FC = () => {
           )}
           {!otpStep && (
             <>
+              <div style={{width: '100%', textAlign: 'right', marginBottom: 10}}>
+                <span style={{fontSize: 14, color: '#ec4899', cursor: 'pointer'}} onClick={() => navigate('/forgot-password?type=patient')}>Mot de passe oublié ?</span>
+              </div>
               <div style={{fontSize: 15, color: '#64748b', marginBottom: 10, textAlign: 'center', width: '100%'}}>
                 Vous n'avez pas de compte ? <span style={{color: '#ec4899', cursor: 'pointer'}} onClick={() => navigate('/patient-register')}>Créer un compte patient</span>
               </div>

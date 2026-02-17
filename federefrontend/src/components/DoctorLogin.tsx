@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaStethoscope, FaUser, FaIdCard, FaLock, FaEye, FaEyeSlash, FaArrowRight } from "react-icons/fa";
-import { loginMedecinAdmin, setToken, setUser } from "../services/api";
+import { loginMedecinAdmin, setToken, setUser, isAuthenticated, getUser } from "../services/api";
 import logo from "../assets/logo.png";
 
 import "./PatientRegister.css";
@@ -15,6 +15,17 @@ const DoctorLogin: React.FC = () => {
 	const [error, setError] = useState("");
 	const [loading, setLoading] = useState(false);
 	const navigate = useNavigate();
+
+	useEffect(() => {
+		if (isAuthenticated()) {
+			const user = getUser();
+			if (user && user.role === 'ROLE_ADMIN') {
+				navigate('/admin-dashboard', { replace: true });
+			} else if (user) {
+				navigate('/profile', { replace: true });
+			}
+		}
+	}, [navigate]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -124,7 +135,7 @@ const DoctorLogin: React.FC = () => {
 
 					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
 						<label style={{ fontWeight: 600, color: '#222', fontSize: 15, marginBottom: 6 }}>Mot de passe</label>
-						<span style={{ fontSize: 14, color: '#0b5ed7', cursor: 'pointer' }} onClick={() => alert('Mot de passe oublié ?')}>Mot de passe oublié ?</span>
+						<span style={{ fontSize: 14, color: '#0b5ed7', cursor: 'pointer' }} onClick={() => navigate('/forgot-password?type=doctor')}>Mot de passe oublié ?</span>
 					</div>
 					<div style={{ width: '100%', position: 'relative', marginBottom: 12 }}>
 						<span style={{ position: 'absolute', left: 14, top: 13, color: '#b0b7c3', fontSize: 16 }}><FaLock /></span>

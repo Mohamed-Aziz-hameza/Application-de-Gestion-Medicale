@@ -22,7 +22,8 @@ function mapUser(u: AdminUtilisateur) {
   const initials = `${(u.prenom?.[0] || '').toUpperCase()}${(u.nom?.[0] || '').toUpperCase()}`;
   const roleColor = u.typeUtilisateur === 'Medecin' ? '#4f8cff' : u.typeUtilisateur === 'Patient' ? '#a259e6' : '#16a34a';
   const roleBg = u.typeUtilisateur === 'Medecin' ? '#e7f2ff' : u.typeUtilisateur === 'Patient' ? '#f3e8ff' : '#d1fae5';
-  const isActive = !!u.statusCompte && u.statusCompte.toLowerCase() !== 'désactivé' && u.statusCompte.toLowerCase() !== 'desactive' && u.statusCompte.toLowerCase() !== 'inactive';
+  const statusLower = (u.statusCompte || '').toLowerCase();
+  const isActive = !!u.statusCompte && !statusLower.includes('désactivé') && !statusLower.includes('desactiv') && !statusLower.includes('inactive');
   return {
     id: u.id,
     initials,

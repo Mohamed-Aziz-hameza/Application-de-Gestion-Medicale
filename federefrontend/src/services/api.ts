@@ -2,6 +2,9 @@
 
 const API_BASE = 'http://localhost:7070/api';
 
+// Token expiration duration (24 hours in milliseconds) - must match backend
+const TOKEN_EXPIRATION_MS = 86400000;
+
 // ─── Types matching backend DTOs ────────────────────────────────
 
 export interface AuthResponse {
@@ -87,18 +90,42 @@ export interface AdminUtilisateur {
   specialite?: string;
 }
 
-// ─── Token management ───────────────────────────────────────────
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
+// ─── Token & Session management ─────────────────────────────────
 
 export function getToken(): string | null {
-  return localStorage.getItem('token');
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+
+  // Check if token has expired based on stored login time
+  const loginTime = localStorage.getItem('tokenLoginTime');
+  if (loginTime) {
+    const elapsed = Date.now() - parseInt(loginTime, 10);
+    if (elapsed >= TOKEN_EXPIRATION_MS) {
+      // Token expired - clean up
+      clearSession();
+      return null;
+    }
+  }
+  return token;
 }
 
 export function setToken(token: string): void {
   localStorage.setItem('token', token);
+  localStorage.setItem('tokenLoginTime', String(Date.now()));
 }
 
 export function removeToken(): void {
   localStorage.removeItem('token');
+  localStorage.removeItem('tokenLoginTime');
 }
 
 export function getUser(): AuthResponse | null {
@@ -114,13 +141,61 @@ export function removeUser(): void {
   localStorage.removeItem('user');
 }
 
-export function logout(): void {
-  removeToken();
-  removeUser();
+function clearSession(): void {
+  localStorage.removeItem('token');
+  localStorage.removeItem('tokenLoginTime');
+  localStorage.removeItem('user');
+}
+
+/**
+ * Logout: call backend to blacklist token, then clear local session.
+ */
+export async function logout(): Promise<void> {
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      await fetch(`${API_BASE}/auth/logout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+    } catch {
+      // Even if the API call fails, we still clear the local session
+    }
+  }
+  clearSession();
 }
 
 export function isAuthenticated(): boolean {
   return !!getToken();
+}
+
+/**
+ * Get remaining session time in milliseconds.
+ * Returns 0 if session is expired or no token exists.
+ */
+export function getSessionTimeRemaining(): number {
+  const loginTime = localStorage.getItem('tokenLoginTime');
+  if (!loginTime) return 0;
+  const remaining = TOKEN_EXPIRATION_MS - (Date.now() - parseInt(loginTime, 10));
+  return remaining > 0 ? remaining : 0;
+}
+
+/**
+ * Start a session expiry watcher that calls the callback when the token expires.
+ * Returns a cleanup function to stop the watcher.
+ */
+export function watchSessionExpiry(onExpired: () => void): () => void {
+  const intervalId = setInterval(() => {
+    if (!isAuthenticated()) {
+      clearInterval(intervalId);
+      onExpired();
+    }
+  }, 30000); // Check every 30 seconds
+
+  return () => clearInterval(intervalId);
 }
 
 // ─── HTTP helpers ───────────────────────────────────────────────
@@ -225,4 +300,27 @@ export function adminActivateUser(id: number): Promise<MessageResponse> {
 /** Deactivate a user account */
 export function adminDeactivateUser(id: number): Promise<MessageResponse> {
   return request<MessageResponse>(`/admin/deactivate/${id}`, { method: 'PUT' });
+}
+
+// ─── Forgot / Reset Password endpoints ──────────────────────────
+
+/** Request a password reset link (sends email) */
+export function forgotPassword(data: ForgotPasswordRequest): Promise<MessageResponse> {
+  return request<MessageResponse>('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/** Reset password using token */
+export function resetPassword(data: ResetPasswordRequest): Promise<MessageResponse> {
+  return request<MessageResponse>('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+/** Validate a reset token (check if still valid) */
+export function validateResetToken(token: string): Promise<MessageResponse> {
+  return request<MessageResponse>(`/auth/validate-reset-token?token=${encodeURIComponent(token)}`);
 }

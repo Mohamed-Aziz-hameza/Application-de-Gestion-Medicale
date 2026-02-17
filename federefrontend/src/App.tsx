@@ -15,6 +15,8 @@ import PatientLogin from './components/PatientLogin';
 import PatientRegister from './components/PatientRegister';
 import AdminDashboard from './components/AdminDashboard';
 import ProfilePage from './components/ProfilePage';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
 function Home() {
   return (
     <>
@@ -41,6 +43,8 @@ function App() {
           <Route path="/patient-register" element={<PatientRegister />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       </div>
     </Router>

@@ -1,26 +1,25 @@
 package com.example.federebackend.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 @Entity
 @Table(name = "medecin")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 public class Medecin {
-    
+
     @Id
     @Column(name = "utilisateur_id")
     private Long utilisateurId;
-    
-    @OneToOne
+
+    @OneToOne(fetch = FetchType.EAGER)
     @MapsId
     @JoinColumn(name = "utilisateur_id")
     private Utilisateur utilisateur;
-    
+
     @Column(name = "specialite", length = 100)
     private String specialite;
 }

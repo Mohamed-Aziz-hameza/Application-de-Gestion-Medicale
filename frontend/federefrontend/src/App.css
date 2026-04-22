@@ -1,0 +1,33 @@
+.App {
+  width: 100%;
+  color: #0f172a;
+}
+
+.section {
+  padding: 80px 70px;
+}
+
+.section-title {
+  font-size: 30px;
+  margin: 0 0 16px;
+}
+
+.section-subtitle {
+  color: #475569;
+  margin: 0;
+  max-width: 720px;
+}
+
+.section-light {
+  background: #ffffff;
+}
+
+.section-soft {
+  background: linear-gradient(180deg, #f6fbff 0%, #ffffff 100%);
+}
+
+@media (max-width: 900px) {
+  .section {
+    padding: 60px 24px;
+  }
+}

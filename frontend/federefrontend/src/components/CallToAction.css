@@ -1,0 +1,89 @@
+.cta {
+  padding: 90px 70px;
+  background: linear-gradient(135deg, #0b5ed7 0%, #0ea5e9 50%, #2563eb 100%);
+  color: #ffffff;
+  text-align: center;
+}
+
+.cta-content {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.cta h2 {
+  margin: 0 0 14px;
+  font-size: 36px;
+  line-height: 1.2;
+}
+
+.cta p {
+  margin: 0 auto 26px;
+  max-width: 720px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.cta-badges {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 14px 22px;
+  margin-bottom: 26px;
+  font-weight: 600;
+}
+
+.cta-badges span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.cta-form {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.cta-button {
+  background: #ffffff;
+  color: #0b5ed7;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 22px;
+  font-weight: 700;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.2);
+}
+
+.cta-form input {
+  min-width: 260px;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 18px;
+  font-size: 15px;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.2);
+}
+
+.cta-footnote {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px 18px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+@media (max-width: 900px) {
+  .cta {
+    padding: 70px 24px;
+  }
+
+  .cta h2 {
+    font-size: 30px;
+  }
+}

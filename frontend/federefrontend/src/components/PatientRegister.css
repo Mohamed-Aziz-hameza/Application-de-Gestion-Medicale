@@ -1,0 +1,84 @@
+.patient-login-root, .patient-register-root {
+  display: flex;
+  min-height: 100vh;
+}
+
+.patient-login-left, .patient-register-left {
+  flex: 1.2;
+  background: linear-gradient(135deg, #ec4899 0%, #f472b6 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0 0 0 70px;
+  position: relative;
+}
+.patient-login-left img, .patient-register-left img {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  background: #fff;
+  object-fit: cover;
+}
+.patient-login-right, .patient-register-right {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(90deg, #f6fbff 0%, #fff 100%);
+}
+.patient-login-form, .patient-register-form {
+  background: #fff;
+  border-radius: 22px;
+  box-shadow: 0 8px 40px rgba(15,23,42,0.13);
+  padding: 44px 38px 32px 38px;
+  max-width: 480px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.patient-login-form input, .patient-register-form input {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 15px;
+  margin-bottom: 14px;
+}
+.patient-login-form button, .patient-register-form button {
+  background: linear-gradient(90deg, #ec4899 0%, #f472b6 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 0;
+  width: 100%;
+  font-weight: 700;
+  font-size: 17px;
+  margin-bottom: 18px;
+  box-shadow: 0 8px 24px rgba(236,72,153,0.13);
+  cursor: pointer;
+}
+.patient-login-form .error, .patient-register-form .error {
+  color: #ec4899;
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+@media (max-width: 900px) {
+  .patient-login-left, .patient-register-left {
+    padding: 0 0 0 24px;
+  }
+}
+@media (max-width: 700px) {
+  .patient-login-root, .patient-register-root {
+    flex-direction: column;
+  }
+  .patient-login-left, .patient-register-left {
+    padding: 32px 0 0 0;
+    align-items: center;
+  }
+  .patient-login-right, .patient-register-right {
+    padding: 24px 0;
+  }
+}
